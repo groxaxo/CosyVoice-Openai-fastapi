@@ -70,8 +70,31 @@ def cosyvoice2_example():
 
 def cosyvoice3_example():
     """ CosyVoice3 Usage, check https://funaudiollm.github.io/cosyvoice3/ for more details
+    
+    This example demonstrates the usage of CosyVoice3 with hybrid model download.
+    The model will automatically download:
+    - ONNX modules (campplus.onnx, speech_tokenizer_v3.onnx) from Lourdle/Fun-CosyVoice3-0.5B-2512_ONNX
+    - Other files (LLM, flow, hift weights) from FunAudioLLM/Fun-CosyVoice3-0.5B-2512
+    
+    To use the standard download (single repository), set use_onnx_repo=False
     """
+    # Option 1: Use hybrid download with ONNX optimization (Recommended)
+    # This automatically uses ONNX files from Lourdle repository
     cosyvoice = AutoModel(model_dir='pretrained_models/Fun-CosyVoice3-0.5B')
+    
+    # Option 2: Explicitly specify to use ONNX repository
+    # cosyvoice = AutoModel(
+    #     model_dir='FunAudioLLM/Fun-CosyVoice3-0.5B-2512',
+    #     use_onnx_repo=True,
+    #     onnx_repo='Lourdle/Fun-CosyVoice3-0.5B-2512_ONNX'
+    # )
+    
+    # Option 3: Use standard download (single repository only)
+    # cosyvoice = AutoModel(
+    #     model_dir='FunAudioLLM/Fun-CosyVoice3-0.5B-2512',
+    #     use_onnx_repo=False
+    # )
+    
     # zero_shot usage
     for i, j in enumerate(cosyvoice.inference_zero_shot('八百标兵奔北坡，北坡炮兵并排跑，炮兵怕把标兵碰，标兵怕碰炮兵炮。', 'You are a helpful assistant.<|endofprompt|>希望你以后能够做的比我还好呦。',
                                                         './asset/zero_shot_prompt.wav', stream=False)):
