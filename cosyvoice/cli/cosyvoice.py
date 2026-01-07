@@ -201,8 +201,14 @@ class CosyVoice3(CosyVoice2):
                 # Download from both repositories
                 logging.info(f'Using hybrid download: base model from {model_dir}, ONNX from {onnx_repo}')
                 # Create a local directory for the combined model
-                local_model_dir = os.path.join(os.path.expanduser('~/.cache/modelscope/hub'), 
-                                               model_dir.replace('/', '_'))
+                # Use huggingface hub cache directory format if available
+                try:
+                    from huggingface_hub import snapshot_download as hf_snapshot_download
+                    cache_base = os.path.expanduser('~/.cache/huggingface/hub')
+                except ImportError:
+                    cache_base = os.path.expanduser('~/.cache/modelscope/hub')
+                
+                local_model_dir = os.path.join(cache_base, model_dir.replace('/', '_'))
                 if not os.path.exists(local_model_dir):
                     os.makedirs(local_model_dir, exist_ok=True)
                     download_model_files_from_multiple_repos(
@@ -250,13 +256,52 @@ class CosyVoice3(CosyVoice2):
 
 
 def AutoModel(**kwargs):
-    if not os.path.exists(kwargs['model_dir']):
-        kwargs['model_dir'] = snapshot_download(kwargs['model_dir'])
-    if os.path.exists('{}/cosyvoice.yaml'.format(kwargs['model_dir'])):
+    model_dir = kwargs['model_dir']
+    
+    # Check if model_dir exists or if it's a remote repository
+    if not os.path.exists(model_dir):
+        # For CosyVoice3, we need to check if we should use hybrid download
+        # Try to detect if this is a CosyVoice3 model by attempting to download just the config
+        try:
+            from huggingface_hub import hf_hub_download
+            # Try to download the cosyvoice3.yaml to determine model type
+            try:
+                temp_yaml = hf_hub_download(repo_id=model_dir, filename='cosyvoice3.yaml')
+                # This is a CosyVoice3 model, let the class handle the download
+                return CosyVoice3(**kwargs)
+            except:
+                pass
+            
+            # Try other model types
+            try:
+                temp_yaml = hf_hub_download(repo_id=model_dir, filename='cosyvoice2.yaml')
+                # This is a CosyVoice2 model
+                kwargs['model_dir'] = snapshot_download(model_dir)
+                return CosyVoice2(**kwargs)
+            except:
+                pass
+            
+            try:
+                temp_yaml = hf_hub_download(repo_id=model_dir, filename='cosyvoice.yaml')
+                # This is a CosyVoice model
+                kwargs['model_dir'] = snapshot_download(model_dir)
+                return CosyVoice(**kwargs)
+            except:
+                pass
+        except ImportError:
+            # huggingface_hub not available, use modelscope
+            pass
+        
+        # Fall back to standard download if detection fails
+        kwargs['model_dir'] = snapshot_download(model_dir)
+        model_dir = kwargs['model_dir']
+    
+    # Now check which model type based on local files
+    if os.path.exists('{}/cosyvoice.yaml'.format(model_dir)):
         return CosyVoice(**kwargs)
-    elif os.path.exists('{}/cosyvoice2.yaml'.format(kwargs['model_dir'])):
+    elif os.path.exists('{}/cosyvoice2.yaml'.format(model_dir)):
         return CosyVoice2(**kwargs)
-    elif os.path.exists('{}/cosyvoice3.yaml'.format(kwargs['model_dir'])):
+    elif os.path.exists('{}/cosyvoice3.yaml'.format(model_dir)):
         return CosyVoice3(**kwargs)
     else:
         raise TypeError('No valid model type found!')
