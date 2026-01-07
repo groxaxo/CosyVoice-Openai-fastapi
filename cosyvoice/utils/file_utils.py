@@ -68,6 +68,8 @@ def download_model_files_from_multiple_repos(base_repo, onnx_repo, local_dir, on
     if onnx_repo:
         logging.info(f'Downloading ONNX-optimized modules from {onnx_repo}...')
         if use_hf:
+            downloaded_files = []
+            failed_files = []
             for onnx_file in onnx_files:
                 try:
                     # Download the specific ONNX file
@@ -77,9 +79,17 @@ def download_model_files_from_multiple_repos(base_repo, onnx_repo, local_dir, on
                         local_dir=local_dir,
                         local_dir_use_symlinks=False
                     )
+                    downloaded_files.append(onnx_file)
                     logging.info(f'Successfully downloaded {onnx_file} from {onnx_repo}')
                 except Exception as e:
+                    failed_files.append(onnx_file)
                     logging.warning(f'Failed to download {onnx_file} from {onnx_repo}: {e}')
+            
+            # Log summary
+            if downloaded_files:
+                logging.info(f'Successfully downloaded {len(downloaded_files)} ONNX files: {downloaded_files}')
+            if failed_files:
+                logging.warning(f'Failed to download {len(failed_files)} ONNX files: {failed_files}')
         else:
             logging.warning(f'Cannot download from {onnx_repo} using modelscope. Please use huggingface_hub.')
     

@@ -23,6 +23,15 @@ from cosyvoice.cli.model import CosyVoiceModel, CosyVoice2Model, CosyVoice3Model
 from cosyvoice.utils.file_utils import logging, download_model_files_from_multiple_repos
 from cosyvoice.utils.class_utils import get_model_type
 
+# ONNX files to download from the Lourdle ONNX repository
+COSYVOICE3_ONNX_FILES = [
+    'flow_fp32.onnx',
+    'flow_fp16.onnx',
+    'hift.onnx',
+    'flow_hift_fp32.onnx',
+    'flow_hift_fp16.onnx'
+]
+
 
 class CosyVoice:
 
@@ -215,8 +224,7 @@ class CosyVoice3(CosyVoice2):
                         base_repo=model_dir,
                         onnx_repo=onnx_repo,
                         local_dir=local_model_dir,
-                        onnx_files=['flow_fp32.onnx', 'flow_fp16.onnx', 'hift.onnx', 
-                                   'flow_hift_fp32.onnx', 'flow_hift_fp16.onnx']
+                        onnx_files=COSYVOICE3_ONNX_FILES
                     )
                 model_dir = local_model_dir
             else:
@@ -266,27 +274,27 @@ def AutoModel(**kwargs):
             from huggingface_hub import hf_hub_download
             # Try to download the cosyvoice3.yaml to determine model type
             try:
-                temp_yaml = hf_hub_download(repo_id=model_dir, filename='cosyvoice3.yaml')
+                hf_hub_download(repo_id=model_dir, filename='cosyvoice3.yaml')
                 # This is a CosyVoice3 model, let the class handle the download
                 return CosyVoice3(**kwargs)
-            except:
+            except Exception:
                 pass
             
             # Try other model types
             try:
-                temp_yaml = hf_hub_download(repo_id=model_dir, filename='cosyvoice2.yaml')
+                hf_hub_download(repo_id=model_dir, filename='cosyvoice2.yaml')
                 # This is a CosyVoice2 model
                 kwargs['model_dir'] = snapshot_download(model_dir)
                 return CosyVoice2(**kwargs)
-            except:
+            except Exception:
                 pass
             
             try:
-                temp_yaml = hf_hub_download(repo_id=model_dir, filename='cosyvoice.yaml')
+                hf_hub_download(repo_id=model_dir, filename='cosyvoice.yaml')
                 # This is a CosyVoice model
                 kwargs['model_dir'] = snapshot_download(model_dir)
                 return CosyVoice(**kwargs)
-            except:
+            except Exception:
                 pass
         except ImportError:
             # huggingface_hub not available, use modelscope
