@@ -209,7 +209,8 @@ class CosyVoice3(CosyVoice2):
                         base_repo=model_dir,
                         onnx_repo=onnx_repo,
                         local_dir=local_model_dir,
-                        onnx_files=['campplus.onnx', 'speech_tokenizer_v3.onnx']
+                        onnx_files=['flow_fp32.onnx', 'flow_fp16.onnx', 'hift.onnx', 
+                                   'flow_hift_fp32.onnx', 'flow_hift_fp16.onnx']
                     )
                 model_dir = local_model_dir
             else:

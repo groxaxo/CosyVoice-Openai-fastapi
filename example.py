@@ -73,13 +73,13 @@ def cosyvoice3_example():
     
     This example demonstrates the usage of CosyVoice3 with hybrid model download.
     The model will automatically download:
-    - ONNX modules (campplus.onnx, speech_tokenizer_v3.onnx) from Lourdle/Fun-CosyVoice3-0.5B-2512_ONNX
-    - Other files (LLM, flow, hift weights) from FunAudioLLM/Fun-CosyVoice3-0.5B-2512
+    - ONNX-optimized flow and hift modules from Lourdle/Fun-CosyVoice3-0.5B-2512_ONNX
+    - Other files (LLM weights, campplus.onnx, speech_tokenizer_v3.onnx, configs) from FunAudioLLM/Fun-CosyVoice3-0.5B-2512
     
     To use the standard download (single repository), set use_onnx_repo=False
     """
     # Option 1: Use hybrid download with ONNX optimization (Recommended)
-    # This automatically uses ONNX files from Lourdle repository
+    # This automatically uses ONNX-optimized flow/hift modules from Lourdle repository
     cosyvoice = AutoModel(model_dir='pretrained_models/Fun-CosyVoice3-0.5B')
     
     # Option 2: Explicitly specify to use ONNX repository

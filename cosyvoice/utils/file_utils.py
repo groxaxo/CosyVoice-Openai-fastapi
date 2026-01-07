@@ -46,10 +46,18 @@ def download_model_files_from_multiple_repos(base_repo, onnx_repo, local_dir, on
         use_hf = False
         logging.warning('huggingface_hub not available, using modelscope. ONNX repo download may not work.')
     
+    # Default ONNX files to download from the Lourdle repository
+    # These are the ONNX-optimized flow and hift modules
     if onnx_files is None:
-        onnx_files = ['campplus.onnx', 'speech_tokenizer_v3.onnx']
+        onnx_files = [
+            'flow_fp32.onnx',
+            'flow_fp16.onnx', 
+            'hift.onnx',
+            'flow_hift_fp32.onnx',
+            'flow_hift_fp16.onnx'
+        ]
     
-    # Download base model files
+    # Download base model files (includes llm.pt, flow.pt, hift.pt, campplus.onnx, speech_tokenizer_v3.onnx, etc.)
     logging.info(f'Downloading base model from {base_repo}...')
     if use_hf:
         snapshot_download(base_repo, local_dir=local_dir, local_dir_use_symlinks=False)
@@ -57,8 +65,9 @@ def download_model_files_from_multiple_repos(base_repo, onnx_repo, local_dir, on
         snapshot_download(base_repo, cache_dir=local_dir)
     
     # Download ONNX files from the ONNX repository and copy to local_dir
+    # These are optimized ONNX versions of the flow and hift modules
     if onnx_repo:
-        logging.info(f'Downloading ONNX files from {onnx_repo}...')
+        logging.info(f'Downloading ONNX-optimized modules from {onnx_repo}...')
         if use_hf:
             for onnx_file in onnx_files:
                 try:

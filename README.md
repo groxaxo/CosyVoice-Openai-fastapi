@@ -137,8 +137,8 @@ snapshot_download('FunAudioLLM/CosyVoice-ttsfrd', local_dir='pretrained_models/C
 #### Option 2: Hybrid Download (Recommended for CosyVoice3 with ONNX optimization)
 
 For `Fun-CosyVoice3-0.5B`, you can use optimized ONNX modules from the Lourdle repository for better performance. The model will automatically download:
-- **ONNX modules** (campplus.onnx, speech_tokenizer_v3.onnx) from `Lourdle/Fun-CosyVoice3-0.5B-2512_ONNX`
-- **All other files** (LLM, flow, hift weights, configs) from `FunAudioLLM/Fun-CosyVoice3-0.5B-2512`
+- **ONNX-optimized flow and hift modules** (flow_fp32.onnx, flow_fp16.onnx, hift.onnx, flow_hift_fp32.onnx, flow_hift_fp16.onnx) from `Lourdle/Fun-CosyVoice3-0.5B-2512_ONNX`
+- **All other files** (LLM weights, campplus.onnx, speech_tokenizer_v3.onnx, configs, etc.) from `FunAudioLLM/Fun-CosyVoice3-0.5B-2512`
 
 ``` python
 from cosyvoice.cli.cosyvoice import AutoModel
