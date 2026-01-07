@@ -20,7 +20,7 @@ from modelscope import snapshot_download
 import torch
 from cosyvoice.cli.frontend import CosyVoiceFrontEnd
 from cosyvoice.cli.model import CosyVoiceModel, CosyVoice2Model, CosyVoice3Model
-from cosyvoice.utils.file_utils import logging
+from cosyvoice.utils.file_utils import logging, download_model_files_from_multiple_repos
 from cosyvoice.utils.class_utils import get_model_type
 
 
@@ -190,11 +190,32 @@ class CosyVoice2(CosyVoice):
 
 class CosyVoice3(CosyVoice2):
 
-    def __init__(self, model_dir, load_trt=False, load_vllm=False, fp16=False, trt_concurrent=1):
+    def __init__(self, model_dir, load_trt=False, load_vllm=False, fp16=False, trt_concurrent=1, 
+                 use_onnx_repo=True, onnx_repo='Lourdle/Fun-CosyVoice3-0.5B-2512_ONNX'):
         self.model_dir = model_dir
         self.fp16 = fp16
+        
+        # Check if we should use the hybrid download approach
         if not os.path.exists(model_dir):
-            model_dir = snapshot_download(model_dir)
+            if use_onnx_repo and onnx_repo:
+                # Download from both repositories
+                logging.info(f'Using hybrid download: base model from {model_dir}, ONNX from {onnx_repo}')
+                # Create a local directory for the combined model
+                local_model_dir = os.path.join(os.path.expanduser('~/.cache/modelscope/hub'), 
+                                               model_dir.replace('/', '_'))
+                if not os.path.exists(local_model_dir):
+                    os.makedirs(local_model_dir, exist_ok=True)
+                    download_model_files_from_multiple_repos(
+                        base_repo=model_dir,
+                        onnx_repo=onnx_repo,
+                        local_dir=local_model_dir,
+                        onnx_files=['campplus.onnx', 'speech_tokenizer_v3.onnx']
+                    )
+                model_dir = local_model_dir
+            else:
+                # Standard download from single repository
+                model_dir = snapshot_download(model_dir)
+        
         hyper_yaml_path = '{}/cosyvoice3.yaml'.format(model_dir)
         if not os.path.exists(hyper_yaml_path):
             raise ValueError('{} not found!'.format(hyper_yaml_path))

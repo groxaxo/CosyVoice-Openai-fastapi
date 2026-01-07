@@ -19,9 +19,63 @@ import json
 import torch
 import torchaudio
 import logging
+import shutil
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(message)s')
+
+
+def download_model_files_from_multiple_repos(base_repo, onnx_repo, local_dir, onnx_files=None):
+    """
+    Download model files from multiple HuggingFace repositories.
+    
+    Args:
+        base_repo: Base repository containing most files (e.g., FunAudioLLM/Fun-CosyVoice3-0.5B-2512)
+        onnx_repo: Repository containing ONNX files (e.g., Lourdle/Fun-CosyVoice3-0.5B-2512_ONNX)
+        local_dir: Local directory to save the combined model files
+        onnx_files: List of ONNX file patterns to download from onnx_repo
+    
+    Returns:
+        local_dir: Path to the local directory containing all files
+    """
+    try:
+        from huggingface_hub import snapshot_download, hf_hub_download
+        use_hf = True
+    except ImportError:
+        from modelscope import snapshot_download
+        use_hf = False
+        logging.warning('huggingface_hub not available, using modelscope. ONNX repo download may not work.')
+    
+    if onnx_files is None:
+        onnx_files = ['campplus.onnx', 'speech_tokenizer_v3.onnx']
+    
+    # Download base model files
+    logging.info(f'Downloading base model from {base_repo}...')
+    if use_hf:
+        snapshot_download(base_repo, local_dir=local_dir, local_dir_use_symlinks=False)
+    else:
+        snapshot_download(base_repo, cache_dir=local_dir)
+    
+    # Download ONNX files from the ONNX repository and copy to local_dir
+    if onnx_repo:
+        logging.info(f'Downloading ONNX files from {onnx_repo}...')
+        if use_hf:
+            for onnx_file in onnx_files:
+                try:
+                    # Download the specific ONNX file
+                    downloaded_file = hf_hub_download(
+                        repo_id=onnx_repo,
+                        filename=onnx_file,
+                        local_dir=local_dir,
+                        local_dir_use_symlinks=False
+                    )
+                    logging.info(f'Successfully downloaded {onnx_file} from {onnx_repo}')
+                except Exception as e:
+                    logging.warning(f'Failed to download {onnx_file} from {onnx_repo}: {e}')
+        else:
+            logging.warning(f'Cannot download from {onnx_repo} using modelscope. Please use huggingface_hub.')
+    
+    return local_dir
 
 
 def read_lists(list_file):
