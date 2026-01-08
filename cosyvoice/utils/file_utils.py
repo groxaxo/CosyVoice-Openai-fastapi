@@ -24,6 +24,78 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(levelname)s %(message)s')
 
 
+def download_model_files_from_multiple_repos(base_repo, onnx_repo, local_dir, onnx_files=None):
+    """
+    Download model files from multiple HuggingFace repositories.
+    
+    Args:
+        base_repo: Base repository containing most files (e.g., FunAudioLLM/Fun-CosyVoice3-0.5B-2512)
+        onnx_repo: Repository containing ONNX files (e.g., Lourdle/Fun-CosyVoice3-0.5B-2512_ONNX)
+        local_dir: Local directory to save the combined model files
+        onnx_files: List of ONNX file patterns to download from onnx_repo
+    
+    Returns:
+        local_dir: Path to the local directory containing all files
+    """
+    try:
+        from huggingface_hub import snapshot_download, hf_hub_download
+        use_hf = True
+    except ImportError:
+        from modelscope import snapshot_download
+        use_hf = False
+        logging.warning('huggingface_hub not available, using modelscope. ONNX repo download may not work.')
+    
+    # Default ONNX files to download from the Lourdle repository
+    # These are the ONNX-optimized flow and hift modules
+    if onnx_files is None:
+        onnx_files = [
+            'flow_fp32.onnx',
+            'flow_fp16.onnx', 
+            'hift.onnx',
+            'flow_hift_fp32.onnx',
+            'flow_hift_fp16.onnx'
+        ]
+    
+    # Download base model files (includes llm.pt, flow.pt, hift.pt, campplus.onnx, speech_tokenizer_v3.onnx, etc.)
+    logging.info(f'Downloading base model from {base_repo}...')
+    if use_hf:
+        snapshot_download(base_repo, local_dir=local_dir, local_dir_use_symlinks=False)
+    else:
+        snapshot_download(base_repo, cache_dir=local_dir)
+    
+    # Download ONNX files from the ONNX repository and copy to local_dir
+    # These are optimized ONNX versions of the flow and hift modules
+    if onnx_repo:
+        logging.info(f'Downloading ONNX-optimized modules from {onnx_repo}...')
+        if use_hf:
+            downloaded_files = []
+            failed_files = []
+            for onnx_file in onnx_files:
+                try:
+                    # Download the specific ONNX file
+                    downloaded_file = hf_hub_download(
+                        repo_id=onnx_repo,
+                        filename=onnx_file,
+                        local_dir=local_dir,
+                        local_dir_use_symlinks=False
+                    )
+                    downloaded_files.append(onnx_file)
+                    logging.info(f'Successfully downloaded {onnx_file} from {onnx_repo}')
+                except Exception as e:
+                    failed_files.append(onnx_file)
+                    logging.warning(f'Failed to download {onnx_file} from {onnx_repo}: {e}')
+            
+            # Log summary
+            if downloaded_files:
+                logging.info(f'Successfully downloaded {len(downloaded_files)} ONNX files: {downloaded_files}')
+            if failed_files:
+                logging.warning(f'Failed to download {len(failed_files)} ONNX files: {failed_files}')
+        else:
+            logging.warning(f'Cannot download from {onnx_repo} using modelscope. Please use huggingface_hub.')
+    
+    return local_dir
+
+
 def read_lists(list_file):
     lists = []
     with open(list_file, 'r', encoding='utf8') as fin:

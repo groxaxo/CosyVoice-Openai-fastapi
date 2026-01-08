@@ -112,6 +112,8 @@
 
 We strongly recommend that you download our pretrained `Fun-CosyVoice3-0.5B` `CosyVoice2-0.5B` `CosyVoice-300M` `CosyVoice-300M-SFT` `CosyVoice-300M-Instruct` model and `CosyVoice-ttsfrd` resource.
 
+#### Option 1: Standard Download (Single Repository)
+
 ``` python
 # modelscope SDK model download
 from modelscope import snapshot_download
@@ -131,6 +133,40 @@ snapshot_download('FunAudioLLM/CosyVoice-300M-SFT', local_dir='pretrained_models
 snapshot_download('FunAudioLLM/CosyVoice-300M-Instruct', local_dir='pretrained_models/CosyVoice-300M-Instruct')
 snapshot_download('FunAudioLLM/CosyVoice-ttsfrd', local_dir='pretrained_models/CosyVoice-ttsfrd')
 ```
+
+#### Option 2: Hybrid Download (Recommended for CosyVoice3 with ONNX optimization)
+
+For `Fun-CosyVoice3-0.5B`, you can use optimized ONNX modules from the Lourdle repository for better performance. The model will automatically download:
+- **ONNX-optimized flow and hift modules** (flow_fp32.onnx, flow_fp16.onnx, hift.onnx, flow_hift_fp32.onnx, flow_hift_fp16.onnx) from `Lourdle/Fun-CosyVoice3-0.5B-2512_ONNX`
+- **All other files** (LLM weights, campplus.onnx, speech_tokenizer_v3.onnx, configs, etc.) from `FunAudioLLM/Fun-CosyVoice3-0.5B-2512`
+
+``` python
+from cosyvoice.cli.cosyvoice import AutoModel
+
+# The model will automatically use the hybrid download approach
+# ONNX files from Lourdle/Fun-CosyVoice3-0.5B-2512_ONNX
+# Other files from FunAudioLLM/Fun-CosyVoice3-0.5B-2512
+cosyvoice = AutoModel(model_dir='FunAudioLLM/Fun-CosyVoice3-0.5B-2512')
+
+# Or explicitly specify the ONNX repository
+cosyvoice = AutoModel(
+    model_dir='FunAudioLLM/Fun-CosyVoice3-0.5B-2512',
+    use_onnx_repo=True,
+    onnx_repo='Lourdle/Fun-CosyVoice3-0.5B-2512_ONNX'
+)
+
+# To disable hybrid download and use only the base repository
+cosyvoice = AutoModel(
+    model_dir='FunAudioLLM/Fun-CosyVoice3-0.5B-2512',
+    use_onnx_repo=False
+)
+```
+
+**Note:** The hybrid download requires `huggingface_hub` to be installed. Install it with:
+```sh
+pip install huggingface_hub
+```
+
 
 Optionally, you can unzip `ttsfrd` resource and install `ttsfrd` package for better text normalization performance.
 
